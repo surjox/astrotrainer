@@ -86,7 +86,14 @@ function MessierCatalog() {
       </div>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((object) => (
-          <li key={object.id} className="panel overflow-hidden p-4">
+          <li
+            key={object.id}
+            className={cn(
+              "panel overflow-hidden p-4",
+              "motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.01] motion-safe:hover:border-primary/50 motion-safe:hover:shadow-[0_18px_36px_rgba(2,8,18,0.32)]",
+              "transition-transform transition-box-shadow transition-border duration-200 ease-out",
+            )}
+          >
             <LocalImageGallery
               objectId={object.id}
               alt={`${object.designation}${object.name ? ` ${object.name}` : ""}`}

@@ -241,7 +241,7 @@ function MessierPractice() {
     <main className="mx-auto grid min-w-0 max-w-7xl gap-4 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[1.35fr_1fr]">
       <div className="panel min-w-0 overflow-hidden">
         {difficulty === "advanced" ? (
-          <div className="relative h-[52vh] min-h-[360px] lg:h-[calc(100vh-8rem)]">
+          <div className="relative h-[46dvh] min-h-[280px] sm:h-[52dvh] sm:min-h-[360px] lg:h-[calc(100dvh-8rem)]">
             <SkyViewer
               view={question.view}
               constellation={targetConstellation}

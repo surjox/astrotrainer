@@ -49,7 +49,7 @@ function ConstellationDetail() {
           defaultBoundary
           defaultGrid
           emphasizeTarget
-          className="h-[46vh] min-h-[300px] lg:h-[calc(100vh-8rem)]"
+          className="h-[42dvh] min-h-[260px] sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]"
         />
       </div>
       <aside className="panel p-4">

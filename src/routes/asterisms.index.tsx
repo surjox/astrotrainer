@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Search, Shuffle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { AsterismPreview } from "@/components/app/ConstellationPreview";
 import { Input } from "@/components/ui/input";
 import {
   ASTERISM_CATEGORIES,
@@ -112,7 +113,24 @@ function AsterismAtlas() {
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (
-          <li key={a.id} className="panel flex flex-col p-4">
+          <li
+            key={a.id}
+            className={cn(
+              "panel flex flex-col p-4",
+              "motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.01] motion-safe:hover:border-primary/50 motion-safe:hover:shadow-[0_18px_36px_rgba(2,8,18,0.32)]",
+              "transition-transform transition-box-shadow transition-border duration-200 ease-out",
+            )}
+          >
+            {/* Sky-map preview */}
+            <AsterismPreview
+              asterism={{
+                name: a.name,
+                principalStars: a.principalStars,
+                lines: a.lines,
+              }}
+              className="mb-3"
+            />
+
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-display text-lg font-semibold">{a.name}</h2>
               <span className="font-mono text-xs text-muted-foreground">
@@ -131,22 +149,44 @@ function AsterismAtlas() {
               <span className="label-caps">In </span>
               <span className="text-muted-foreground">{a.constellationNames.join(", ")}</span>
             </p>
-            <p className="mt-1 text-xs">
-              <span className="label-caps">Principal stars </span>
-              <span className="text-muted-foreground">
-                {a.stars.slice(0, 4).map(starLabelWithBayer).join(", ") || "—"}
-                {a.stars.length > 4 ? ` +${a.stars.length - 4}` : ""}
-              </span>
-            </p>
-            <p className="mt-1 text-xs">
-              <span className="label-caps">Recognition </span>
-              <span className="text-muted-foreground">{a.recognition}</span>
-            </p>
+
+            {/* Principal stars */}
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <span className="label-caps block mb-1.5 text-xs w-full">Principal stars</span>
+              {a.stars.slice(0, 4).map((s) => {
+                const label = starLabelWithBayer(s);
+                const [name, designation] = label.split(" — ");
+                return (
+                  <span
+                    key={s.id}
+                    className="rounded border border-border/80 bg-secondary/50 px-2 py-1 text-xs flex flex-wrap items-center gap-1"
+                  >
+                    <span className="text-foreground">{name}</span>
+                    {designation && <span className="text-muted-foreground">{designation}</span>}
+                  </span>
+                );
+              })}
+              {a.stars.slice(0, 4).length === 0 && <span className="text-muted-foreground">—</span>}
+              {a.stars.length > 4 && (
+                <span className="rounded border border-border/80 bg-secondary/50 px-2 py-1 text-xs text-muted-foreground">
+                  +{a.stars.length - 4}
+                </span>
+              )}
+            </div>
+
+            {/* Recognition */}
+            <div className="mt-1">
+              <span className="label-caps block text-xs mb-1">Recognition</span>
+              <p className="text-sm leading-relaxed text-muted-foreground">{a.recognition}</p>
+            </div>
+
             {a.bestSeason && (
-              <p className="mt-1 text-xs">
-                <span className="label-caps">Best observed </span>
-                <span className="text-muted-foreground">{a.bestSeason}</span>
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="label-caps text-xs">Best observed</span>
+                <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  {a.bestSeason}
+                </span>
+              </div>
             )}
 
             <div className="mt-4 flex flex-wrap gap-2">

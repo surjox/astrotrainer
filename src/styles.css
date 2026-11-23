@@ -112,10 +112,12 @@
 
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
   }
 
   body {
     min-height: 100vh;
+    overflow-x: hidden;
     background:
       radial-gradient(circle at top, rgba(118, 152, 255, 0.1), transparent 36%),
       radial-gradient(circle at bottom right, rgba(79, 210, 177, 0.08), transparent 28%),
@@ -150,6 +152,22 @@
 
   .route-content {
     view-transition-name: astro-route;
+    min-width: 0;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 
   .route-content:has(.sky-map-expanded) {

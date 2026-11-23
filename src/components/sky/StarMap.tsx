@@ -69,7 +69,6 @@ export interface StarMapProps {
   /** Dim stars that are not part of the target figure */
   emphasizeTarget?: boolean;
   interactive?: boolean;
-  showCompass?: boolean;
   className?: string;
   onStarClick?: (star: Star) => void;
   onSkyClick?: ((position: { ra: number; dec: number }) => void) | undefined;
@@ -223,7 +222,6 @@ export const StarMap = forwardRef<StarMapHandle, StarMapProps>(function StarMap(
     labelStars: labelStarsProp,
     emphasizeTarget = false,
     interactive = true,
-    showCompass = true,
     className,
     onStarClick,
     onSkyClick,
@@ -912,76 +910,7 @@ export const StarMap = forwardRef<StarMapHandle, StarMapProps>(function StarMap(
       ctx.restore();
     }
 
-    // ----------------------------------------------------------
-    // COMPASS
-    // ----------------------------------------------------------
 
-    if (showCompass) {
-      const c = {
-        x: size.w - 46,
-        y: size.h - 46,
-      };
-
-      const north = proj.project(localView.ra, Math.min(89.5, localView.dec + 1));
-
-      const center = proj.project(localView.ra, localView.dec);
-
-      let angle = -Math.PI / 2;
-
-      if (north && center) {
-        angle = Math.atan2(north.y - center.y, north.x - center.x);
-      }
-
-      ctx.save();
-
-      ctx.translate(c.x, c.y);
-
-      ctx.strokeStyle = "rgba(150,178,220,0.35)";
-
-      ctx.lineWidth = 1;
-
-      ctx.beginPath();
-
-      ctx.arc(0, 0, 22, 0, Math.PI * 2);
-
-      ctx.stroke();
-
-      ctx.rotate(angle);
-
-      ctx.beginPath();
-
-      ctx.moveTo(0, 0);
-
-      ctx.lineTo(16, 0);
-
-      ctx.strokeStyle = "rgba(85,183,255,0.85)";
-
-      ctx.stroke();
-
-      ctx.restore();
-
-      const nx = c.x + Math.cos(angle) * 30;
-
-      const ny = c.y + Math.sin(angle) * 30;
-
-      ctx.font = "600 10px ui-sans-serif, system-ui, sans-serif";
-
-      ctx.fillStyle = "rgba(150,178,220,0.8)";
-
-      ctx.textAlign = "center";
-
-      ctx.textBaseline = "middle";
-
-      ctx.fillText("N", nx, ny);
-
-      ctx.fillText(
-        "E",
-        c.x + Math.cos(angle + Math.PI / 2) * 30,
-        c.y + Math.sin(angle + Math.PI / 2) * 30,
-      );
-
-      ctx.textAlign = "left";
-    }
   }, [
     field,
     fieldRadius,
@@ -1004,7 +933,6 @@ export const StarMap = forwardRef<StarMapHandle, StarMapProps>(function StarMap(
     target,
     emphasizeTarget,
     markers,
-    showCompass,
   ]);
 
   // ------------------------------------------------------------
@@ -1232,62 +1160,7 @@ export const StarMap = forwardRef<StarMapHandle, StarMapProps>(function StarMap(
     }
   };
 
-  // ------------------------------------------------------------
-  // COMPASS ROTATION CONTROL
-  // ------------------------------------------------------------
 
-  const compassRef = useRef<{
-    cx: number;
-    cy: number;
-    angle: number;
-    moved: boolean;
-  } | null>(null);
-
-  const compassAngle = (e: React.PointerEvent, cx: number, cy: number) =>
-    (Math.atan2(e.clientY - cy, e.clientX - cx) * 180) / Math.PI;
-
-  const onCompassDown = (e: React.PointerEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    compassRef.current = {
-      cx,
-      cy,
-      angle: compassAngle(e, cx, cy),
-      moved: false,
-    };
-  };
-
-  const onCompassMove = (e: React.PointerEvent) => {
-    const c = compassRef.current;
-    if (!c) return;
-    e.stopPropagation();
-    const angle = compassAngle(e, c.cx, c.cy);
-    let delta = angle - c.angle;
-    if (delta > 180) delta -= 360;
-    if (delta < -180) delta += 360;
-    if (!c.moved && Math.abs(delta) < 2) return;
-    c.moved = true;
-    c.angle = angle;
-    const v = viewRef.current;
-    commit({
-      ...v,
-      rotation: ((((v.rotation + delta) % 360) + 540) % 360) - 180,
-    });
-  };
-
-  const onCompassUp = (e: React.PointerEvent) => {
-    const c = compassRef.current;
-    compassRef.current = null;
-    if (!c) return;
-    e.stopPropagation();
-    if (!c.moved) {
-      commit({ ...viewRef.current, rotation: 0 });
-    }
-  };
 
   useImperativeHandle(
     ref,
@@ -1337,30 +1210,6 @@ export const StarMap = forwardRef<StarMapHandle, StarMapProps>(function StarMap(
           display: "block",
         }}
       />
-      {showCompass && interactive && (
-        <div
-          role="slider"
-          aria-label="Rotate sky map"
-          aria-valuenow={Math.round(localView.rotation)}
-          aria-valuemin={-180}
-          aria-valuemax={180}
-          tabIndex={0}
-          title="Drag to rotate, click to reset rotation"
-          className="absolute z-10 cursor-grab rounded-full active:cursor-grabbing"
-          style={{
-            right: 18,
-            bottom: 18,
-            width: 56,
-            height: 56,
-          }}
-          onPointerDown={onCompassDown}
-          onPointerMove={onCompassMove}
-          onPointerUp={onCompassUp}
-          onPointerCancel={() => {
-            compassRef.current = null;
-          }}
-        />
-      )}
     </div>
   );
 });

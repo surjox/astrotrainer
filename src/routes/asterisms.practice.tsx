@@ -319,7 +319,7 @@ function AsterismPractice() {
           labelStars={revealed ? asterismLabelStars(target) : undefined}
           lockToggles={!revealed}
           emphasizeTarget={revealed}
-          className="h-[46vh] min-h-[300px] lg:h-[calc(100vh-8rem)]"
+          className="h-[42dvh] min-h-[260px] sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]"
         />
         <div className="pointer-events-none absolute left-3 top-3">
           <span className="rounded bg-background/70 px-2 py-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground backdrop-blur">

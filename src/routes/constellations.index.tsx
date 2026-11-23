@@ -4,8 +4,14 @@ import { createPortal } from "react-dom";
 import { Download, Search, Shuffle, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ConstellationPreview } from "@/components/app/ConstellationPreview";
+import { ConstellationRealSkyViewer } from "@/components/app/ConstellationRealSkyViewer";
 import { Input } from "@/components/ui/input";
-import { constellations, importantStars, starLabelWithBayer } from "@/lib/astro/catalog";
+import {
+  constellations,
+  importantStars,
+  starLabelWithBayer,
+} from "@/lib/astro/catalog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/constellations/")({
@@ -47,6 +53,11 @@ function AtlasPage() {
   const [iauConstellation, setIauConstellation] = useState<(typeof constellations)[number] | null>(
     null,
   );
+
+  // The constellation whose real-sky image viewer is currently open.
+  const [realSkyConstellation, setRealSkyConstellation] = useState<
+    (typeof constellations)[number] | null
+  >(null);
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,6 +104,10 @@ function AtlasPage() {
 
   const closeIauViewer = () => {
     setIauConstellation(null);
+  };
+
+  const closeRealSkyViewer = () => {
+    setRealSkyConstellation(null);
   };
 
   return (
@@ -164,7 +179,17 @@ function AtlasPage() {
 
       <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((c) => (
-          <li key={c.id} className="panel flex flex-col p-4">
+          <li
+            key={c.id}
+            className={cn(
+              "panel flex flex-col p-4",
+              "motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.01] motion-safe:hover:border-primary/50 motion-safe:hover:shadow-[0_18px_36px_rgba(2,8,18,0.32)]",
+              "transition-transform transition-box-shadow transition-border duration-200 ease-out",
+            )}
+          >
+            {/* Sky-map preview */}
+            <ConstellationPreview constellation={c} className="mb-3" />
+
             {/* Name + abbreviation */}
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="font-display text-lg font-semibold">{c.name}</h2>
@@ -181,19 +206,34 @@ function AtlasPage() {
             </p>
 
             {/* Bright stars */}
-            <p className="mt-3 text-xs">
-              <span className="label-caps">Bright stars </span>
-
-              <span className="text-muted-foreground">
-                {importantStars(c).slice(0, 4).map(starLabelWithBayer).join(", ") || "—"}
-              </span>
-            </p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span className="label-caps block mb-1.5 text-xs w-full">Bright stars</span>
+              {importantStars(c)
+                .slice(0, 4)
+                .map((s) => {
+                  const label = starLabelWithBayer(s);
+                  const [name, designation] = label.split(" — ");
+                  return (
+                    <span
+                      key={s.id}
+                      className="rounded border border-border/80 bg-secondary/50 px-2 py-1 text-xs flex flex-wrap items-center gap-1"
+                    >
+                      <span className="text-foreground">{name}</span>
+                      {designation && <span className="text-muted-foreground">{designation}</span>}
+                    </span>
+                  );
+                })}
+              {importantStars(c).slice(0, 4).length === 0 && (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </div>
 
             {/* Best observed */}
-            <p className="mt-1 text-xs">
+            <p className="mt-1 text-xs flex items-center gap-2">
               <span className="label-caps">Best observed </span>
-
-              <span className="text-muted-foreground">{c.bestSeason}</span>
+              <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                {c.bestSeason}
+              </span>
             </p>
 
             {/* ================================================== */}
@@ -206,6 +246,18 @@ function AtlasPage() {
                 <Link to="/constellations/$id" params={{ id: c.id }}>
                   View in Sky
                 </Link>
+              </Button>
+
+              {/* Real-Sky Image */}
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setRealSkyConstellation(c);
+                }}
+                disabled={!c.abbreviation}
+              >
+                Real-Sky Image
               </Button>
 
               {/* IAU Chart */}
@@ -295,6 +347,65 @@ function AtlasPage() {
                   src={getIauPdfPath(iauConstellation.abbreviation)}
                   title={`${iauConstellation.name} IAU chart`}
                   className="h-full w-full border-0"
+                />
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* ====================================================== */}
+      {/* REAL-SKY IMAGE VIEWER MODAL                            */}
+      {/* ====================================================== */}
+
+      {realSkyConstellation &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${realSkyConstellation.name} real-sky photograph`}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") closeRealSkyViewer();
+            }}
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                closeRealSkyViewer();
+              }
+            }}
+          >
+            <div
+              className={cn(
+                "flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl",
+                "relative",
+              )}
+            >
+              {/* Modal header */}
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg font-semibold">
+                    {realSkyConstellation.name}
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {realSkyConstellation.abbreviation}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeRealSkyViewer}
+                  aria-label="Close real-sky image viewer"
+                >
+                  <X className="size-5" />
+                </Button>
+              </div>
+
+              {/* Image area */}
+              <div className="min-h-0 flex-1 flex items-center justify-center bg-secondary/10 p-4 sm:p-6 overflow-hidden relative">
+                <ConstellationRealSkyViewer
+                  abbreviation={realSkyConstellation.abbreviation}
+                  name={realSkyConstellation.name}
+                  onClose={closeRealSkyViewer}
                 />
               </div>
             </div>

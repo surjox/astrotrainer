@@ -57,7 +57,7 @@ function SkyMapPage() {
           labelsMode="constellation"
           labelModeWhenOn="important"
           allowExpand
-          className="h-[calc(100vh-12rem)] min-h-[420px] sm:h-[calc(100vh-13rem)]"
+          className="h-[calc(100dvh-12rem)] min-h-[360px] sm:h-[calc(100dvh-13rem)]"
           mapClassName="rounded-lg"
         />
       </div>

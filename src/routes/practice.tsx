@@ -33,6 +33,10 @@ import {
 } from "@/lib/progress";
 import { recordStarAnswer, starAccuracy } from "@/lib/starProgress";
 import { getIauImageUrl, preloadIauImage } from "@/lib/iauImages";
+import {
+  resolveConstellationImage,
+  getEligibleConstellationIds,
+} from "@/lib/astro/constellationImages";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/practice")({
@@ -73,7 +77,7 @@ const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
   },
 ];
 
-type PracticeMode = "constellation" | "iau-images";
+type PracticeMode = "constellation" | "iau-images" | "real-sky";
 
 const FUTURE_MODES = [
   "Identify Star",
@@ -143,6 +147,35 @@ function PracticePage() {
   const [starHintPromptOpen, setStarHintPromptOpen] = useState(false);
   const [starLinesVisible, setStarLinesVisible] = useState(false);
 
+  // Real-Sky Challenge state
+  const [realSkyDifficulty, setRealSkyDifficulty] = useState<"easy" | "advanced">("easy");
+  const [realSkyQuestion, setRealSkyQuestion] = useState<Question | null>(null);
+  const [realSkyAnswered, setRealSkyAnswered] = useState<{
+    correct: boolean;
+    elapsedMs: number;
+    points: number;
+  } | null>(null);
+  const [realSkyAttempts, setRealSkyAttempts] = useState(0);
+  const [realSkyLinesVisible, setRealSkyLinesVisible] = useState(false);
+  const [realSkyWrongFeedback, setRealSkyWrongFeedback] = useState(false);
+  const [realSkyInput, setRealSkyInput] = useState("");
+  const [realSkyEligibleIds, setRealSkyEligibleIds] = useState<string[]>([]);
+  const [realSkyEligibilityChecked, setRealSkyEligibilityChecked] = useState(false);
+  const [realSkyImgLoading, setRealSkyImgLoading] = useState(false);
+  const [realSkyImgError, setRealSkyImgError] = useState(false);
+  const [realSkyDisplayedSrc, setRealSkyDisplayedSrc] = useState<string | null>(null);
+  const [realSkyAnnotatedStatus, setRealSkyAnnotatedStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const realSkyStartedAt = useRef(0);
+  const realSkyImgUrlRef = useRef<string | null>(null);
+  const realSkyAttemptsRef = useRef(0);
+  const realSkyAnnotatedPreloadRef = useRef<{
+    questionId: string;
+    src: string;
+    img: HTMLImageElement | null;
+  } | null>(null);
+
   useEffect(() => {
     if (!starSelected) {
       setStarQuestion(null);
@@ -169,6 +202,20 @@ function PracticePage() {
     setStarHintPromptOpen(false);
     setStarLinesVisible(false);
   }, [starSelected]);
+
+  // Check which constellations have real-sky images available.
+  useEffect(() => {
+    let active = true;
+    getEligibleConstellationIds().then((ids) => {
+      if (active) {
+        setRealSkyEligibleIds(ids);
+        setRealSkyEligibilityChecked(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const weak = useMemo(() => weakConstellations(progress, 8), [progress]);
 
@@ -199,6 +246,195 @@ function PracticePage() {
     }
   }, [difficulty, pool, mode]);
 
+  const clearRealSkyAnnotatedPreload = useCallback(() => {
+    const current = realSkyAnnotatedPreloadRef.current;
+    if (current?.img) {
+      current.img.onload = null;
+      current.img.onerror = null;
+      current.img.src = "";
+    }
+    realSkyAnnotatedPreloadRef.current = null;
+  }, []);
+
+  const nextRealSkyQuestion = useCallback(() => {
+    clearRealSkyAnnotatedPreload();
+    setRealSkyAnswered(null);
+    setRealSkyInput("");
+    realSkyAttemptsRef.current = 0;
+    setRealSkyAttempts(0);
+    setRealSkyLinesVisible(false);
+    setRealSkyWrongFeedback(false);
+    setRealSkyAnnotatedStatus("idle");
+    setRealSkyImgError(false);
+    realSkyStartedAt.current = Date.now();
+
+    if (realSkyEligibleIds.length === 0) {
+      setRealSkyQuestion(null);
+      setQuestion(null);
+      setRealSkyDisplayedSrc(null);
+      return;
+    }
+
+    const question = generateQuestion(
+      QuestionType.IDENTIFY_CONSTELLATION_FROM_REAL_SKY_IMAGE,
+      "beginner",
+      realSkyEligibleIds,
+    );
+    setRealSkyQuestion(question);
+    setQuestion(question);
+  }, [clearRealSkyAnnotatedPreload, realSkyEligibleIds, setQuestion]);
+
+  const revealRealSkyAnnotated = useCallback(
+    (questionId: string, abbreviation: string) => {
+      if (realSkyAnnotatedPreloadRef.current?.questionId === questionId) {
+        const current = realSkyAnnotatedPreloadRef.current;
+        if (current.src) {
+          if (current.img?.complete && current.img.naturalWidth > 0) {
+            setRealSkyAnnotatedStatus("ready");
+            setRealSkyImgError(false);
+            setRealSkyDisplayedSrc(current.src);
+            return;
+          }
+          if (current.img && !current.img.complete) {
+            setRealSkyAnnotatedStatus("loading");
+            return;
+          }
+        }
+      }
+
+      const src = resolveConstellationImage("annotated", abbreviation);
+      const img = new Image();
+      realSkyAnnotatedPreloadRef.current = { questionId, src, img };
+      setRealSkyAnnotatedStatus("loading");
+      setRealSkyImgError(false);
+
+      const applyReady = () => {
+        const active = realSkyAnnotatedPreloadRef.current;
+        if (!active || active.questionId !== questionId || active.src !== src) return;
+        if (img.naturalWidth === 0) {
+          setRealSkyAnnotatedStatus("error");
+          return;
+        }
+        setRealSkyAnnotatedStatus("ready");
+        setRealSkyImgError(false);
+        setRealSkyDisplayedSrc(src);
+      };
+
+      const applyError = () => {
+        const active = realSkyAnnotatedPreloadRef.current;
+        if (!active || active.questionId !== questionId || active.src !== src) return;
+        setRealSkyAnnotatedStatus("error");
+      };
+
+      img.onload = applyReady;
+      img.onerror = applyError;
+      img.src = src;
+
+      if (img.complete) {
+        if (img.naturalWidth > 0) applyReady();
+        else applyError();
+      }
+    },
+    [],
+  );
+
+  const submitRealSky = useCallback(
+    (choiceId: string | null, userInput?: string) => {
+      if (!realSkyQuestion) return;
+      if (realSkyAnswered || realSkyAttemptsRef.current >= 2) return;
+
+      const elapsedMs = Date.now() - realSkyStartedAt.current;
+      const target = getConstellation(realSkyQuestion.correctAnswer)!;
+
+      let correct = false;
+      let validatedChoiceId = choiceId;
+
+      if (realSkyDifficulty === "advanced" && userInput !== undefined) {
+        const normalized = userInput.trim().toLowerCase().replace(/\s+/g, " ");
+        if (!normalized) return; // empty submission does not consume an attempt
+
+        const constellationName = target.name.toLowerCase().replace(/\s+/g, " ");
+        const constellationAbbr = target.abbreviation.toLowerCase();
+        correct =
+          normalized === constellationName || normalized === constellationAbbr;
+        validatedChoiceId = correct ? realSkyQuestion.correctAnswer : null;
+      } else {
+        if (choiceId === null) return;
+        correct = choiceId === realSkyQuestion.correctAnswer;
+      }
+
+      const points = scoreFor(correct, elapsedMs);
+
+      // Track the answered question in the session history so the counter and
+      // completion logic work for real-sky mode too.
+      const record: Answered = {
+        question: realSkyQuestion,
+        chosen: validatedChoiceId,
+        correct,
+        elapsedMs,
+        points,
+      };
+
+      if (correct) {
+        realSkyAttemptsRef.current = 2; // resolve: prevent any further submissions
+        setRealSkyAttempts(2);
+        setRealSkyLinesVisible(true);
+        setRealSkyWrongFeedback(false);
+        setRealSkyAnswered({ correct, elapsedMs, points });
+        setHistory((h) => [...h, record]);
+        recordAnswer({
+          constellationId: realSkyQuestion.correctAnswer,
+          correct,
+          elapsedMs,
+          difficulty: realSkyDifficulty === "easy" ? "beginner" : "advanced",
+        });
+        revealRealSkyAnnotated(realSkyQuestion.id, target.abbreviation);
+        return;
+      }
+
+      if (realSkyDifficulty === "advanced") {
+        const nextAttempts = Math.min(realSkyAttemptsRef.current + 1, 2);
+        realSkyAttemptsRef.current = nextAttempts;
+        setRealSkyAttempts(nextAttempts);
+
+        if (nextAttempts >= 2) {
+          // Out of attempts: reveal the answer and mark as answered.
+          setRealSkyLinesVisible(true);
+          setRealSkyWrongFeedback(false);
+          setRealSkyAnswered({ correct: false, elapsedMs, points });
+          setHistory((h) => [...h, record]);
+          recordAnswer({
+            constellationId: realSkyQuestion.correctAnswer,
+            correct: false,
+            elapsedMs,
+            difficulty: "advanced",
+          });
+          revealRealSkyAnnotated(realSkyQuestion.id, target.abbreviation);
+        } else {
+          // First wrong attempt: show wrong feedback, let them try again.
+          setRealSkyWrongFeedback(true);
+        }
+        return;
+      }
+
+      // Easy mode: single attempt. Show annotated image and feedback immediately.
+      realSkyAttemptsRef.current = 2; // resolve
+      setRealSkyAttempts(1);
+      setRealSkyLinesVisible(true);
+      setRealSkyWrongFeedback(false);
+      setRealSkyAnswered({ correct: false, elapsedMs, points });
+      setHistory((h) => [...h, record]);
+      recordAnswer({
+        constellationId: realSkyQuestion.correctAnswer,
+        correct: false,
+        elapsedMs,
+        difficulty: "beginner",
+      });
+      revealRealSkyAnnotated(realSkyQuestion.id, target.abbreviation);
+    },
+    [realSkyAnswered, realSkyDifficulty, realSkyQuestion, revealRealSkyAnnotated],
+  );
+
   const iauImageUrl =
     mode === "iau-images" && question ? getIauImageUrl(question.correctAnswer) : null;
 
@@ -219,8 +455,25 @@ function PracticePage() {
     };
   }, [iauImageUrl]);
 
+  useEffect(() => {
+    if (mode !== "real-sky" || !realSkyQuestion) return;
+    const target = getConstellation(realSkyQuestion.correctAnswer);
+    if (!target) return;
+    const src = resolveConstellationImage("unannotated", target.abbreviation);
+    setRealSkyDisplayedSrc(src);
+    setRealSkyAnnotatedStatus("idle");
+    setRealSkyImgError(false);
+  }, [mode, realSkyQuestion]);
+
+  useEffect(() => {
+    return () => {
+      clearRealSkyAnnotatedPreload();
+    };
+  }, [clearRealSkyAnnotatedPreload]);
+
   const submit = useCallback(
     (choiceId: string | null, userInput?: string) => {
+      if (mode === "real-sky") return;
       if (!question || answered) return;
       const elapsedMs = Date.now() - startedAt.current;
 
@@ -413,16 +666,40 @@ function PracticePage() {
       const total = history.reduce((s, h) => s + h.points, 0);
       recordSession(total);
       setFinished(true);
-      setQuestion(null);
+      if (mode === "real-sky") {
+        clearRealSkyAnnotatedPreload();
+        setRealSkyQuestion(null);
+        setRealSkyDisplayedSrc(null);
+        setRealSkyAnnotatedStatus("idle");
+        realSkyAttemptsRef.current = 0;
+      } else {
+        setQuestion(null);
+      }
       return;
     }
-    nextQuestion();
+    if (mode === "real-sky") {
+      nextRealSkyQuestion();
+    } else {
+      nextQuestion();
+    }
   };
 
   const restart = () => {
+    clearRealSkyAnnotatedPreload();
     setHistory([]);
     setFinished(false);
     setAnswered(null);
+    setRealSkyAnswered(null);
+    setRealSkyQuestion(null);
+    realSkyAttemptsRef.current = 0;
+    setRealSkyAttempts(0);
+    setRealSkyLinesVisible(false);
+    setRealSkyWrongFeedback(false);
+    setRealSkyInput("");
+    setRealSkyDisplayedSrc(null);
+    setRealSkyAnnotatedStatus("idle");
+    setRealSkyImgLoading(false);
+    setRealSkyImgError(false);
     setQuestion(null);
     void navigate({ to: "/practice", search: {} });
   };
@@ -611,7 +888,7 @@ function PracticePage() {
     return (
       <main className="mx-auto grid min-w-0 max-w-7xl gap-4 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[1.35fr_1fr]">
         <div className="panel min-w-0 overflow-hidden">
-          <div className="relative h-[52vh] min-h-[360px] lg:h-[calc(100vh-8rem)]">
+          <div className="relative h-[46dvh] min-h-[280px] sm:h-[52dvh] sm:min-h-[360px] lg:h-[calc(100dvh-8rem)]">
             <SkyViewer
               key={starQuestion.id}
               constellation={targetConstellation}
@@ -667,7 +944,7 @@ function PracticePage() {
                         Click the map to answer. You have two attempts.
                       </p>
                     </>
-                  ) : (
+        ) : (
                     <>
                       <Button disabled={!starSelection} onClick={() => submitStar()}>
                         Submit location
@@ -929,6 +1206,25 @@ function PracticePage() {
                     Identify constellations from official IAU constellation artwork
                   </span>
                 </button>
+                <button
+                  onClick={() => {
+                    setMode("real-sky");
+                    setRealSkyDifficulty("easy");
+                  }}
+                  className={cn(
+                    "panel p-4 text-left transition-colors",
+                    mode === "real-sky"
+                      ? "border-primary/60 bg-primary/10"
+                      : "hover:bg-secondary/50",
+                  )}
+                >
+                  <span className="font-display text-base font-semibold">
+                    Real-Sky Challenge
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    Identify constellations from real astronomical photographs
+                  </span>
+                </button>
               </div>
             </section>
 
@@ -938,6 +1234,27 @@ function PracticePage() {
                 <p className="mt-2 text-xs text-muted-foreground">
                   IAU Image mode uses multiple-choice with balanced difficulty.
                 </p>
+              ) : mode === "real-sky" ? (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {[
+                    { id: "easy", label: "Easy", blurb: "Four answer options" },
+                    { id: "advanced", label: "Advanced", blurb: "Type the constellation name" },
+                  ].map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => setRealSkyDifficulty(d.id as "easy" | "advanced")}
+                      className={cn(
+                        "panel p-4 text-left transition-colors",
+                        realSkyDifficulty === d.id
+                          ? "border-primary/60 bg-primary/10"
+                          : "hover:bg-secondary/50",
+                      )}
+                    >
+                      <span className="font-display text-base font-semibold">{d.label}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{d.blurb}</span>
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <div className="mt-2 grid gap-2 sm:grid-cols-3">
                   {DIFFICULTIES.map((d) => (
@@ -996,8 +1313,26 @@ function PracticePage() {
               )}
             </section>
 
-            <Button size="lg" className="mt-6 w-full sm:w-auto" onClick={nextQuestion}>
-              Start session
+            <Button
+              size="lg"
+              className="mt-6 w-full sm:w-auto"
+              disabled={
+                mode === "real-sky" &&
+                (!realSkyEligibilityChecked || realSkyEligibleIds.length === 0)
+              }
+              onClick={() => {
+                if (mode === "real-sky") {
+                  nextRealSkyQuestion();
+                } else {
+                  nextQuestion();
+                }
+              }}
+            >
+              {mode === "real-sky" && !realSkyEligibilityChecked
+                ? "Checking photographs…"
+                : mode === "real-sky" && realSkyEligibleIds.length === 0
+                  ? "No photographs available"
+                  : "Start session"}
             </Button>
           </>
         )}
@@ -1019,7 +1354,7 @@ function PracticePage() {
       <div className="panel relative overflow-hidden">
         {mode === "iau-images" ? (
           // IAU Image display
-          <div className="flex items-center justify-center h-[46vh] min-h-[300px] lg:h-[calc(100vh-8rem)] bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+          <div className="flex h-[42dvh] min-h-[260px] items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">Official IAU Constellation</p>
               {iauImageState === "ready" ? (
@@ -1045,6 +1380,114 @@ function PracticePage() {
               )}
             </div>
           </div>
+        ) : mode === "real-sky" ? (
+          // Real-Sky photograph display
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+            <p className="mb-4 text-center text-sm text-muted-foreground">
+              Real-Sky Challenge — {realSkyDifficulty === "easy" ? "Easy" : "Advanced"}
+            </p>
+            {(() => {
+              const unannotatedSrc = resolveConstellationImage("unannotated", target.abbreviation);
+              const displayedSrc = realSkyDisplayedSrc ?? unannotatedSrc;
+              const showingAnnotated = displayedSrc !== unannotatedSrc;
+              return (
+                <>
+                  <div className="flex h-[42dvh] min-h-[260px] items-center justify-center sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]">
+                    {realSkyImgLoading && !realSkyDisplayedSrc ? (
+                      <div
+                        role="status"
+                        className="rounded bg-slate-800 p-8 text-sm text-muted-foreground"
+                      >
+                        Loading constellation image...
+                      </div>
+                    ) : null}
+                    {realSkyDisplayedSrc ? (
+                      <img
+                        src={displayedSrc}
+                        alt={
+                          showingAnnotated
+                            ? `${target.name} with constellation lines`
+                            : `${target.name} real-sky photograph`
+                        }
+                        className={cn(
+                          "mx-auto max-h-full max-w-full rounded object-contain",
+                          !showingAnnotated && "opacity-90",
+                        )}
+                        loading="eager"
+                        fetchPriority="high"
+                        onLoad={(e) => {
+                          if ((e.target as HTMLImageElement).src === realSkyImgUrlRef.current) {
+                            setRealSkyImgLoading(false);
+                            setRealSkyImgError(false);
+                          }
+                        }}
+                        onError={(e) => {
+                          if ((e.target as HTMLImageElement).src === realSkyImgUrlRef.current) {
+                            setRealSkyImgLoading(false);
+                            setRealSkyImgError(true);
+                          }
+                        }}
+                        ref={(el) => {
+                          if (el) {
+                            const url = el.src;
+                            if (url !== realSkyImgUrlRef.current) {
+                              realSkyImgUrlRef.current = url;
+                              setRealSkyImgLoading(true);
+                              setRealSkyImgError(false);
+                              if (el.complete) {
+                                if (el.naturalWidth > 0) {
+                                  setRealSkyImgLoading(false);
+                                  setRealSkyImgError(false);
+                                } else {
+                                  setRealSkyImgLoading(false);
+                                  setRealSkyImgError(true);
+                                }
+                              }
+                            } else if (el.complete && realSkyImgLoading) {
+                              setRealSkyImgLoading(false);
+                              setRealSkyImgError(el.naturalWidth === 0);
+                            }
+                          }
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                      {showingAnnotated ? "annotated" : "unannotated"}
+                    </span>
+                    {realSkyDifficulty === "advanced" && realSkyAttempts > 0 && !realSkyAnswered && (
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                        · attempt {realSkyAttempts} / 2
+                      </span>
+                    )}
+                  </div>
+                  {realSkyAnnotatedStatus === "loading" && (
+                    <div
+                      role="status"
+                      className="mx-auto mt-3 flex w-full max-w-md items-center justify-center gap-2 rounded-md border border-border/70 bg-slate-900/70 px-3 py-2 text-sm text-muted-foreground"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="inline-block size-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground"
+                      />
+                      Loading annotated image...
+                    </div>
+                  )}
+                  {realSkyAnnotatedStatus === "error" && (
+                    <div className="mx-auto mt-3 w-full max-w-md rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      Annotated image could not be loaded. Showing the unannotated photograph.
+                    </div>
+                  )}
+                  {realSkyImgError && !realSkyImgLoading && !showingAnnotated && realSkyAnnotatedStatus !== "loading" && (
+                    <div className="mx-auto mt-3 w-full max-w-md rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      Image could not be loaded.
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         ) : (
           // Sky map display for constellation identification
           <SkyViewer
@@ -1059,7 +1502,7 @@ function PracticePage() {
             labelModeWhenOn="important"
             lockToggles={!revealed}
             emphasizeTarget={revealed}
-            className="h-[46vh] min-h-[300px] lg:h-[calc(100vh-8rem)]"
+            className="h-[42dvh] min-h-[260px] sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]"
           />
         )}
         <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2">
@@ -1082,7 +1525,7 @@ function PracticePage() {
       </div>
 
       <aside className="flex flex-col gap-4">
-        {!revealed ? (
+        {!revealed && !(mode === "real-sky" && !!realSkyAnswered) ? (
           <div className="panel p-4">
             <h1 className="font-display text-lg font-semibold">
               {mode === "iau-images"
@@ -1098,7 +1541,66 @@ function PracticePage() {
                   ? "Type the constellation name and press Check Answer."
                   : "Drag to pan, scroll or pinch to zoom. The field is centred on the target."}
             </p>
-            {mode === "constellation" && difficulty === "advanced" ? (
+            {mode === "real-sky" ? (
+              realSkyDifficulty === "advanced" ? (
+                <div className="mt-4 flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={realSkyInput}
+                      onChange={(e) => {
+                        setRealSkyInput(e.target.value);
+                        setRealSkyWrongFeedback(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (!realSkyAnswered && realSkyAttemptsRef.current < 2) {
+                            submitRealSky(null, realSkyInput);
+                          }
+                        }
+                      }}
+                      placeholder="e.g., Orion"
+                      className="flex-1"
+                      autoFocus
+                      disabled={!!realSkyAnswered || realSkyAttempts >= 2}
+                    />
+                    <Button
+                      onClick={() => submitRealSky(null, realSkyInput)}
+                      disabled={
+                        !!realSkyAnswered ||
+                        realSkyAttempts >= 2 ||
+                        !realSkyInput.trim()
+                      }
+                    >
+                      Check Answer
+                    </Button>
+                  </div>
+                  {realSkyWrongFeedback && (
+                    <Alert
+                      variant="destructive"
+                      className="border-destructive/40 bg-destructive/10 text-destructive"
+                    >
+                      Wrong answer. Try again.
+                    </Alert>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-2">
+                  {realSkyQuestion?.choices.map((c) => (
+                    <Button
+                      key={c.id}
+                      variant="secondary"
+                      size="lg"
+                      className="justify-start"
+                      disabled={!!realSkyAnswered}
+                      onClick={() => submitRealSky(c.id)}
+                    >
+                      {c.label}
+                    </Button>
+                  ))}
+                </div>
+              )
+            ) : mode === "constellation" && difficulty === "advanced" ? (
               <div className="mt-4 flex gap-2">
                 <Input
                   value={textInput}
@@ -1113,8 +1615,8 @@ function PracticePage() {
                   autoFocus
                 />
                 <Button onClick={() => submit(null, textInput)}>Check Answer</Button>
-              </div>
-            ) : (
+          </div>
+        ) : (
               <div className="mt-4 grid gap-2">
                 {question.choices.map((c) => (
                   <Button
@@ -1130,7 +1632,44 @@ function PracticePage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : mode === "real-sky" ? (
+          <div className="panel p-4">
+            <div
+              className={cn(
+                "flex items-center gap-2 text-sm font-semibold",
+                realSkyAnswered?.correct ? "text-success" : "text-destructive",
+              )}
+            >
+              {realSkyAnswered?.correct ? <Check className="size-4" /> : <X className="size-4" />}
+              {realSkyAnswered?.correct
+                ? `Correct · +${realSkyAnswered.points} pts`
+                : `Incorrect — correct answer: ${target.name}`}
+            </div>
+            {!realSkyAnswered?.correct && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                The annotated photograph is revealed below for reference.
+              </p>
+            )}
+            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+              {((realSkyAnswered?.elapsedMs ?? 0) / 1000).toFixed(1)}s
+            </p>
+
+            <div className="mt-4 border-t border-border/70 pt-4">
+              <ConstellationFacts constellation={target} />
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button asChild variant="secondary">
+                <Link to="/constellations/$id" params={{ id: target.id }}>
+                  Study Constellation
+                </Link>
+              </Button>
+              <Button onClick={advance}>
+                {history.length >= QUESTIONS_PER_SESSION ? "See results" : "Next question"}
+              </Button>
+            </div>
+          </div>
+        ) : answered ? (
           <div className="panel p-4">
             <div
               className={cn(
@@ -1171,7 +1710,7 @@ function PracticePage() {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </aside>
     </main>
   );

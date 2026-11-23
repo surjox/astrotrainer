@@ -122,7 +122,7 @@ function Index() {
           <SkyViewer
             constellation={hero}
             magnitudeLimit={5.4}
-            className="h-[320px] sm:h-[420px]"
+            className="h-[280px] sm:h-[420px]"
             emphasizeTarget
           />
         </div>

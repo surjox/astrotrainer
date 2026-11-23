@@ -167,7 +167,45 @@ export function generateQuestion(
       return generateConstellationQuestion(difficulty, pool);
     case QuestionType.IDENTIFY_CONSTELLATION_FROM_IMAGE:
       return generateIAUImageQuestion(pool);
+    case QuestionType.IDENTIFY_CONSTELLATION_FROM_REAL_SKY_IMAGE:
+      return generateRealSkyQuestion(pool);
     default:
       throw new Error(`Question type ${type} is not implemented yet`);
   }
+}
+
+/**
+ * Generate a Real-Sky Challenge question using only constellations that have
+ * an available unannotated photograph. All choices (correct + distractors)
+ * are drawn from the eligible pool so no option shows a missing image.
+ */
+export function generateRealSkyQuestion(pool?: string[]): Question {
+  const candidates = pool?.length
+    ? (pool.map(getConstellation).filter(Boolean) as Constellation[])
+    : constellations;
+
+  if (candidates.length === 0) {
+    throw new Error("No eligible constellations for Real-Sky Challenge");
+  }
+
+  const target = candidates[Math.floor(Math.random() * candidates.length)]!;
+
+  // Pick 3 distinct distractors from the eligible pool (excluding target)
+  const others = candidates.filter((c) => c.id !== target.id);
+  const shuffled = [...others].sort(() => Math.random() - 0.5);
+  const distractors = shuffled.slice(0, 3);
+
+  const choices = [target, ...distractors]
+    .sort(() => Math.random() - 0.5)
+    .map((c) => ({ id: c.id, label: c.name }));
+
+  return {
+    id: `q-rs-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type: QuestionType.IDENTIFY_CONSTELLATION_FROM_REAL_SKY_IMAGE,
+    target: target.id,
+    difficulty: "beginner", // Real-sky uses Easy/Advanced, mapped externally
+    skyState: buildSkyState(target, "beginner"),
+    choices,
+    correctAnswer: target.id,
+  };
 }
