@@ -32,11 +32,18 @@ import {
   weakConstellations,
 } from "@/lib/progress";
 import { recordStarAnswer, starAccuracy } from "@/lib/starProgress";
-import { getIauImageUrl, preloadIauImage } from "@/lib/iauImages";
 import {
   resolveConstellationImage,
   getEligibleConstellationIds,
 } from "@/lib/astro/constellationImages";
+import {
+  buildIauPracticeQuestions,
+  IAU_PRACTICE_MODE_CONFIG,
+  isCorrectIauAnswer,
+  preloadImage,
+  type IauPracticeMode,
+  type IauPracticeQuestion,
+} from "@/lib/astro/iauConstellationPractice";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/practice")({
@@ -78,6 +85,7 @@ const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
 ];
 
 type PracticeMode = "constellation" | "iau-images" | "real-sky";
+type IauQuestionStatus = "idle" | "first-wrong" | "correct" | "revealed";
 
 const FUTURE_MODES = [
   "Identify Star",
@@ -128,7 +136,21 @@ function PracticePage() {
   const [textInput, setTextInput] = useState("");
   const startedAt = useRef(0);
   const pendingIauQuestion = useRef<Question | null>(null);
-  const [iauImageState, setIauImageState] = useState<"loading" | "ready" | "error">("loading");
+  // IAU Constellations Practice (Easy/Advanced, 2 attempts, annotated reveal)
+  const [iauDifficulty, setIauDifficulty] = useState<IauPracticeMode>("easy");
+  const [iauQueue, setIauQueue] = useState<IauPracticeQuestion[]>([]);
+  const [iauIndex, setIauIndex] = useState(0);
+  const [iauInput, setIauInput] = useState("");
+  const [iauAttempts, setIauAttempts] = useState(0);
+  const [iauStatus, setIauStatus] = useState<IauQuestionStatus>("idle");
+  const [iauCurrentImage, setIauCurrentImage] = useState<"question" | "annotated">("question");
+  const [iauQuestionImageState, setIauQuestionImageState] = useState<"loading" | "ready" | "error">("loading");
+  const [iauAnnotatedState, setIauAnnotatedState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [iauSession, setIauSession] = useState({ correct: 0, incorrect: 0 });
+  const [iauFinished, setIauFinished] = useState(false);
+  const iauQuestionStartRef = useRef(0);
+  const iauCompletedRef = useRef(false);
+  const iauAdvanceRef = useRef(0);
 
   const [starPracticeType, setStarPracticeType] = useState<StarPracticeNameType>("common");
   const [starPracticeMethod, setStarPracticeMethod] = useState<"identify" | "locate">("identify");
@@ -435,25 +457,117 @@ function PracticePage() {
     [realSkyAnswered, realSkyDifficulty, realSkyQuestion, revealRealSkyAnnotated],
   );
 
-  const iauImageUrl =
-    mode === "iau-images" && question ? getIauImageUrl(question.correctAnswer) : null;
+  const iauQuestion = mode === "iau-images" ? iauQueue[iauIndex] ?? null : null;
+  const iauQuestionImageUrl = iauQuestion?.questionImageUrl ?? null;
+  const iauAnnotatedImageUrl = iauQuestion?.annotatedImageUrl ?? null;
+  const iauCompleted = iauStatus === "correct" || iauStatus === "revealed";
+  const iauAttemptsRemaining = Math.max(0, 2 - iauAttempts);
+
+  const startIauSession = useCallback((nextMode: IauPracticeMode = iauDifficulty) => {
+    const q = buildIauPracticeQuestions(nextMode);
+    iauAdvanceRef.current += 1;
+    iauCompletedRef.current = false;
+    setMode("iau-images");
+    setIauDifficulty(nextMode);
+    setIauQueue(q);
+    setIauIndex(0);
+    setIauInput("");
+    setIauAttempts(0);
+    setIauStatus("idle");
+    setIauCurrentImage("question");
+    setIauAnnotatedState("idle");
+    setIauQuestionImageState(q.length > 0 ? "loading" : "error");
+    setIauSession({ correct: 0, incorrect: 0 });
+    setIauFinished(false);
+    iauQuestionStartRef.current = Date.now();
+  }, [iauDifficulty]);
+
+  const nextIauQuestion = useCallback(() => {
+    if (!iauQueue.length) return;
+    const nextIndex = iauIndex + 1;
+    iauAdvanceRef.current += 1;
+    iauCompletedRef.current = false;
+    if (nextIndex >= iauQueue.length) {
+      setIauFinished(true);
+      return;
+    }
+    setIauIndex(nextIndex);
+    setIauInput("");
+    setIauAttempts(0);
+    setIauStatus("idle");
+    setIauCurrentImage("question");
+    setIauAnnotatedState("idle");
+    setIauQuestionImageState("loading");
+    iauQuestionStartRef.current = Date.now();
+  }, [iauIndex, iauQueue.length]);
+
+  const preloadIauAnnotated = useCallback((question: IauPracticeQuestion) => {
+    const token = ++iauAdvanceRef.current;
+    setIauAnnotatedState("loading");
+    void preloadImage(question.annotatedImageUrl).then((ok) => {
+      if (iauAdvanceRef.current !== token) return;
+      setIauAnnotatedState(ok ? "ready" : "error");
+      if (ok) setIauCurrentImage("annotated");
+    });
+  }, []);
+
+  const submitIau = useCallback(() => {
+    if (!iauQuestion || iauCompletedRef.current) return;
+    const input = iauInput;
+    const normalized = input.trim();
+    if (!normalized) return;
+    const elapsedMs = Date.now() - iauQuestionStartRef.current;
+    const correct = isCorrectIauAnswer(input, iauQuestion.constellationId);
+
+    if (correct) {
+      iauCompletedRef.current = true;
+      setIauAttempts((a) => Math.min(2, a + 1));
+      setIauStatus("correct");
+      setIauSession((s) => ({ ...s, correct: s.correct + 1 }));
+      recordAnswer({
+        constellationId: iauQuestion.constellationId,
+        correct: true,
+        elapsedMs,
+        difficulty: "intermediate",
+      });
+      preloadIauAnnotated(iauQuestion);
+      return;
+    }
+
+    const nextAttempts = Math.min(2, iauAttempts + 1);
+    setIauAttempts(nextAttempts);
+    if (nextAttempts >= 2) {
+      iauCompletedRef.current = true;
+      setIauStatus("revealed");
+      setIauSession((s) => ({ ...s, incorrect: s.incorrect + 1 }));
+      recordAnswer({
+        constellationId: iauQuestion.constellationId,
+        correct: false,
+        elapsedMs,
+        difficulty: "intermediate",
+      });
+      preloadIauAnnotated(iauQuestion);
+    } else {
+      setIauStatus("first-wrong");
+    }
+  }, [iauAttempts, iauInput, iauQuestion, preloadIauAnnotated, recordAnswer]);
 
   useEffect(() => {
-    if (!iauImageUrl) return;
-
+    if (mode !== "iau-images" || !iauQuestionImageUrl) return;
     let active = true;
-    setIauImageState("loading");
-    void preloadIauImage(iauImageUrl).then((loaded) => {
-      if (active) setIauImageState(loaded ? "ready" : "error");
+    setIauQuestionImageState("loading");
+    void preloadImage(iauQuestionImageUrl).then((ok) => {
+      if (active) setIauQuestionImageState(ok ? "ready" : "error");
     });
-
-    const next = pendingIauQuestion.current;
-    if (next) void preloadIauImage(getIauImageUrl(next.correctAnswer));
-
+    const next = iauQueue[iauIndex + 1];
+    if (next) {
+      void preloadImage(next.questionImageUrl);
+      void preloadImage(next.annotatedImageUrl);
+    }
     return () => {
       active = false;
     };
-  }, [iauImageUrl]);
+  }, [iauIndex, iauQuestionImageUrl, iauQueue, mode]);
 
   useEffect(() => {
     if (mode !== "real-sky" || !realSkyQuestion) return;
@@ -1113,11 +1227,123 @@ function PracticePage() {
     );
   }
 
+  if (mode === "iau-images" && iauFinished) {
+    const total = iauSession.correct + iauSession.incorrect;
+    const accuracyPct = total > 0 ? Math.round((iauSession.correct / total) * 100) : 0;
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <h1 className="font-display text-3xl font-bold">IAU Constellations session complete</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {IAU_PRACTICE_MODE_CONFIG[iauDifficulty].label} mode · {total} questions
+        </p>
+        <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[
+            ["Attempted", String(total)],
+            ["Correct", String(iauSession.correct)],
+            ["Incorrect", String(iauSession.incorrect)],
+            ["Accuracy", `${accuracyPct}%`],
+            ["Mode", IAU_PRACTICE_MODE_CONFIG[iauDifficulty].label],
+            ["Question pool", String(iauQueue.length || total)],
+          ].map(([label, value]) => (
+            <div key={label} className="panel p-4">
+              <dt className="label-caps">{label}</dt>
+              <dd className="mt-1 font-display text-2xl font-semibold">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button onClick={() => startIauSession(iauDifficulty)}>Practice again</Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              iauAdvanceRef.current += 1;
+              iauCompletedRef.current = false;
+              setIauQueue([]);
+              setIauIndex(0);
+              setIauInput("");
+              setIauAttempts(0);
+              setIauStatus("idle");
+              setIauCurrentImage("question");
+              setIauAnnotatedState("idle");
+              setIauQuestionImageState("loading");
+              setIauSession({ correct: 0, incorrect: 0 });
+              setIauFinished(false);
+            }}
+          >
+            Return to mode selection
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   if (finished) {
     return <Results history={history} onRestart={restart} />;
   }
 
-  if (!question) {
+  if (mode === "iau-images" && !iauQuestion) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 gap-1.5 text-muted-foreground">
+          <Link to="/practice" search={{ category: "constellations" }}>Back to practice</Link>
+        </Button>
+        <h1 className="font-display text-3xl font-bold">Official IAU Constellations</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Identify official IAU constellation charts. Choose a difficulty before starting; it stays active for the session.
+        </p>
+
+        <section className="mt-8">
+          <h2 className="label-caps">Difficulty</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {(["easy", "advanced"] as IauPracticeMode[]).map((m) => {
+              const selected = iauDifficulty === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setIauDifficulty(m)}
+                  className={cn(
+                    "panel p-4 text-left transition-colors sm:p-5",
+                    selected ? "border-primary/60 bg-primary/10" : "hover:bg-secondary/50",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-display text-base font-semibold">
+                      {m === "easy" ? "Easy" : "Advanced"}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider",
+                        selected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {selected ? "Selected" : "Select"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {m === "easy" ? "Constellation lines are present." : "No constellation lines."}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="mt-8 flex justify-center">
+          <Button
+            type="button"
+            size="lg"
+            className="min-h-11 min-w-44 px-8"
+            onClick={() => startIauSession(iauDifficulty)}
+          >
+            Start Session
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
+  if (mode !== "iau-images" && !question) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="font-display text-3xl font-bold">Practice</h1>
@@ -1196,9 +1422,7 @@ function PracticePage() {
                   onClick={() => setMode("iau-images")}
                   className={cn(
                     "panel p-4 text-left transition-colors",
-                    mode === "iau-images"
-                      ? "border-primary/60 bg-primary/10"
-                      : "hover:bg-secondary/50",
+                    "hover:bg-secondary/50",
                   )}
                 >
                   <span className="font-display text-base font-semibold">Official IAU Images</span>
@@ -1230,11 +1454,7 @@ function PracticePage() {
 
             <section className="mt-6">
               <h2 className="label-caps">Difficulty</h2>
-              {mode === "iau-images" ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  IAU Image mode uses multiple-choice with balanced difficulty.
-                </p>
-              ) : mode === "real-sky" ? (
+              {mode === "real-sky" ? (
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {[
                     { id: "easy", label: "Easy", blurb: "Four answer options" },
@@ -1340,6 +1560,165 @@ function PracticePage() {
     );
   }
 
+  if (mode === "iau-images" && iauQuestion) {
+    const q = iauQuestion;
+    const showAnnotated = iauCurrentImage === "annotated" && iauAnnotatedState === "ready";
+    const currentConstellation = getConstellation(q.constellationId);
+
+    return (
+      <main className="mx-auto grid max-w-7xl gap-4 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[1.55fr_1fr]">
+        <div className="panel relative overflow-hidden">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-3 sm:p-4">
+            <p className="mb-3 text-center text-sm text-muted-foreground">
+              Official IAU Constellation · {IAU_PRACTICE_MODE_CONFIG[iauDifficulty].label}
+            </p>
+            <div
+              className="relative mx-auto flex h-[42dvh] min-h-[260px] w-full max-w-full items-center justify-center overflow-hidden rounded-md sm:h-[48dvh] sm:min-h-[320px] lg:h-[calc(100dvh-12rem)]"
+              style={{ aspectRatio: "4 / 3" }}
+            >
+              {iauQuestionImageState === "loading" && (
+                <div role="status" className="absolute inset-0 flex items-center justify-center rounded-md bg-slate-800/80 text-sm text-muted-foreground">
+                  Loading constellation image...
+                </div>
+              )}
+              {iauQuestionImageState === "error" && !showAnnotated && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive">
+                  Image could not be loaded. {q.questionImageUrl}
+                </div>
+              )}
+              {iauQuestionImageState === "ready" && (
+                <img
+                  src={q.questionImageUrl}
+                  alt={iauCompleted ? q.answer : "IAU constellation chart"}
+                  className={cn(
+                    "absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ease-out",
+                    showAnnotated ? "opacity-0" : "opacity-100",
+                  )}
+                  loading="eager"
+                  fetchPriority="high"
+                  draggable={false}
+                />
+              )}
+              {iauAnnotatedState === "ready" && iauAnnotatedImageUrl && (
+                <img
+                  src={iauAnnotatedImageUrl}
+                  alt={`${q.answer} annotated IAU constellation chart`}
+                  className={cn(
+                    "absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ease-out",
+                    showAnnotated ? "opacity-100" : "opacity-0",
+                  )}
+                  loading="eager"
+                  draggable={false}
+                />
+              )}
+            </div>
+
+            <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+              <span>{showAnnotated ? "annotated answer" : iauDifficulty === "easy" ? "lines visible" : "no lines"}</span>
+              <span>·</span>
+              <span>Attempt {Math.min(2, iauAttempts + (iauCompleted ? 0 : 1))} / 2</span>
+            </div>
+
+            {iauAnnotatedState === "loading" && (
+              <div role="status" className="mx-auto mt-3 flex w-full max-w-md items-center justify-center gap-2 rounded-md border border-border/70 bg-slate-900/70 px-3 py-2 text-sm text-muted-foreground">
+                <span aria-hidden="true" className="inline-block size-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+                Loading annotated constellation...
+              </div>
+            )}
+            {iauAnnotatedState === "error" && (
+              <div className="mx-auto mt-3 w-full max-w-md rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                Annotated image could not be loaded. Correct answer: {q.answer}.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <aside className="flex flex-col gap-4">
+          <div className="panel p-4">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+              <span className="rounded bg-background/70 px-2 py-1">{IAU_PRACTICE_MODE_CONFIG[iauDifficulty].label}</span>
+              <span className="rounded bg-background/70 px-2 py-1">Question {iauIndex + 1} / {iauQueue.length}</span>
+              <span className="rounded bg-background/70 px-2 py-1">{iauAttemptsRemaining} attempt{iauAttemptsRemaining === 1 ? "" : "s"} left</span>
+            </div>
+
+            <h1 className="mt-3 font-display text-lg font-semibold">Which constellation is shown?</h1>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {iauDifficulty === "easy"
+                ? "Constellation lines are present. Enter the constellation name."
+                : "No constellation lines. Enter the constellation name."}
+            </p>
+
+            {!iauCompleted ? (
+              <form
+                className="mt-4 flex flex-col gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitIau();
+                }}
+              >
+                <Input
+                  value={iauInput}
+                  onChange={(e) => setIauInput(e.target.value)}
+                  placeholder="Enter constellation name..."
+                  className="min-h-11"
+                  autoFocus
+                  aria-label="Constellation name"
+                  disabled={iauCompleted}
+                />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" className="min-h-11 sm:min-w-32" disabled={!iauInput.trim() || iauCompleted}>
+                    Submit
+                  </Button>
+                </div>
+                {iauStatus === "first-wrong" && (
+                  <Alert variant="destructive" className="border-destructive/40 bg-destructive/10 text-destructive">
+                    Wrong answer. Try again!
+                  </Alert>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Use the official constellation name. Case, extra spaces, and minor punctuation differences are ignored.
+                </p>
+              </form>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {iauStatus === "correct" ? (
+                  <div className="rounded-md border border-success/40 bg-success/10 p-3 text-success">
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <Check className="size-4" />Correct! Well done.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                      <X className="size-4" />Incorrect — both attempts used.
+                    </p>
+                    <div className="mt-3 rounded-md border border-border/70 bg-background/70 p-3">
+                      <p className="label-caps text-muted-foreground">Correct Answer</p>
+                      <p className="mt-1 font-display text-2xl font-semibold text-foreground sm:text-3xl">
+                        {q.answer}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <Button className="min-h-11 w-full sm:w-auto" onClick={nextIauQuestion}>
+                  {iauIndex + 1 >= iauQueue.length ? "See results" : "Next Question"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {iauCompleted && currentConstellation && (
+            <div className="panel p-4">
+              <ConstellationFacts constellation={currentConstellation} />
+            </div>
+          )}
+        </aside>
+      </main>
+    );
+  }
+
+  if (!question) return null;
   const target = getConstellation(question.correctAnswer)!;
   const view: ViewState = {
     ra: question.skyState.centerRa,
@@ -1352,35 +1731,7 @@ function PracticePage() {
   return (
     <main className="mx-auto grid max-w-7xl gap-4 px-3 py-4 sm:px-6 sm:py-6 lg:grid-cols-[1.55fr_1fr]">
       <div className="panel relative overflow-hidden">
-        {mode === "iau-images" ? (
-          // IAU Image display
-          <div className="flex h-[42dvh] min-h-[260px] items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 sm:h-[46dvh] sm:min-h-[300px] lg:h-[calc(100dvh-8rem)]">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-4">Official IAU Constellation</p>
-              {iauImageState === "ready" ? (
-                <img
-                  src={iauImageUrl ?? undefined}
-                  alt={revealed ? target.name : "Constellation image"}
-                  className="max-w-full max-h-[60vh] mx-auto object-contain rounded"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-              ) : iauImageState === "loading" ? (
-                <div
-                  role="status"
-                  className="text-muted-foreground text-sm p-8 bg-slate-800 rounded"
-                >
-                  Loading constellation image...
-                </div>
-              ) : (
-                <div className="text-muted-foreground text-sm p-8 bg-slate-800 rounded">
-                  <p>IAU constellation image not found.</p>
-                  <p className="text-xs mt-2">Expected: {iauImageUrl}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : mode === "real-sky" ? (
+        {mode === "real-sky" ? (
           // Real-Sky photograph display
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-4">
             <p className="mb-4 text-center text-sm text-muted-foreground">

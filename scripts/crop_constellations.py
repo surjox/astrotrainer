@@ -6,7 +6,7 @@ import numpy as np
 # FOLDER
 # ------------------------------------------------------------
 
-folder = "public/iau-constellations/processed"
+folder = "public/iau-constellations/processed-new"
 
 # ------------------------------------------------------------
 # SETTINGS

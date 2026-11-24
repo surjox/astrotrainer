@@ -1,0 +1,785 @@
+[
+  {
+    "file": "and.pdf",
+    "green_pixels_detected": 44669,
+    "interior_green_pixels": 32969,
+    "exterior_green_pixels": 32969,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ant.pdf",
+    "green_pixels_detected": 32004,
+    "interior_green_pixels": 29482,
+    "exterior_green_pixels": 29482,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "aps.pdf",
+    "green_pixels_detected": 31348,
+    "interior_green_pixels": 30385,
+    "exterior_green_pixels": 30385,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "aql.pdf",
+    "green_pixels_detected": 38240,
+    "interior_green_pixels": 24976,
+    "exterior_green_pixels": 24976,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "aqr.pdf",
+    "green_pixels_detected": 56572,
+    "interior_green_pixels": 42404,
+    "exterior_green_pixels": 42404,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ara.pdf",
+    "green_pixels_detected": 32602,
+    "interior_green_pixels": 28503,
+    "exterior_green_pixels": 28503,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ari.pdf",
+    "green_pixels_detected": 53362,
+    "interior_green_pixels": 43855,
+    "exterior_green_pixels": 43855,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "aur.pdf",
+    "green_pixels_detected": 87571,
+    "interior_green_pixels": 69869,
+    "exterior_green_pixels": 69869,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "boo.pdf",
+    "green_pixels_detected": 39750,
+    "interior_green_pixels": 25727,
+    "exterior_green_pixels": 25727,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cae.pdf",
+    "green_pixels_detected": 21491,
+    "interior_green_pixels": 19591,
+    "exterior_green_pixels": 19591,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cam.pdf",
+    "green_pixels_detected": 49915,
+    "interior_green_pixels": 46603,
+    "exterior_green_pixels": 46603,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cap.pdf",
+    "green_pixels_detected": 45618,
+    "interior_green_pixels": 27028,
+    "exterior_green_pixels": 27028,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "car.pdf",
+    "green_pixels_detected": 47069,
+    "interior_green_pixels": 37391,
+    "exterior_green_pixels": 37391,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cas.pdf",
+    "green_pixels_detected": 34712,
+    "interior_green_pixels": 30506,
+    "exterior_green_pixels": 30506,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cen.pdf",
+    "green_pixels_detected": 61779,
+    "interior_green_pixels": 50601,
+    "exterior_green_pixels": 50601,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cep.pdf",
+    "green_pixels_detected": 42154,
+    "interior_green_pixels": 30070,
+    "exterior_green_pixels": 30070,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cet.pdf",
+    "green_pixels_detected": 55154,
+    "interior_green_pixels": 42857,
+    "exterior_green_pixels": 42857,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cha.pdf",
+    "green_pixels_detected": 37131,
+    "interior_green_pixels": 34592,
+    "exterior_green_pixels": 34592,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cir.pdf",
+    "green_pixels_detected": 37237,
+    "interior_green_pixels": 35267,
+    "exterior_green_pixels": 35267,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cma.pdf",
+    "green_pixels_detected": 44480,
+    "interior_green_pixels": 35935,
+    "exterior_green_pixels": 35935,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cmi.pdf",
+    "green_pixels_detected": 40916,
+    "interior_green_pixels": 40021,
+    "exterior_green_pixels": 40021,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cnc.pdf",
+    "green_pixels_detected": 48832,
+    "interior_green_pixels": 39711,
+    "exterior_green_pixels": 39711,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "col.pdf",
+    "green_pixels_detected": 19737,
+    "interior_green_pixels": 17146,
+    "exterior_green_pixels": 17146,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "com.pdf",
+    "green_pixels_detected": 30333,
+    "interior_green_pixels": 27915,
+    "exterior_green_pixels": 27915,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cra.pdf",
+    "green_pixels_detected": 41751,
+    "interior_green_pixels": 40285,
+    "exterior_green_pixels": 40285,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "crb.pdf",
+    "green_pixels_detected": 36149,
+    "interior_green_pixels": 33678,
+    "exterior_green_pixels": 33678,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "crt.pdf",
+    "green_pixels_detected": 27337,
+    "interior_green_pixels": 21300,
+    "exterior_green_pixels": 21300,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cru.pdf",
+    "green_pixels_detected": 39291,
+    "interior_green_pixels": 36833,
+    "exterior_green_pixels": 36833,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "crv.pdf",
+    "green_pixels_detected": 31527,
+    "interior_green_pixels": 26018,
+    "exterior_green_pixels": 26018,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cvn.pdf",
+    "green_pixels_detected": 32885,
+    "interior_green_pixels": 32354,
+    "exterior_green_pixels": 32354,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "cyg.pdf",
+    "green_pixels_detected": 51953,
+    "interior_green_pixels": 37629,
+    "exterior_green_pixels": 37629,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "del.pdf",
+    "green_pixels_detected": 17806,
+    "interior_green_pixels": 15995,
+    "exterior_green_pixels": 15995,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "dor.pdf",
+    "green_pixels_detected": 28590,
+    "interior_green_pixels": 21286,
+    "exterior_green_pixels": 21286,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "dra.pdf",
+    "green_pixels_detected": 51239,
+    "interior_green_pixels": 40282,
+    "exterior_green_pixels": 40282,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "equ.pdf",
+    "green_pixels_detected": 18742,
+    "interior_green_pixels": 17997,
+    "exterior_green_pixels": 17997,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "eri.pdf",
+    "green_pixels_detected": 57150,
+    "interior_green_pixels": 42143,
+    "exterior_green_pixels": 42143,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "for.pdf",
+    "green_pixels_detected": 35538,
+    "interior_green_pixels": 33747,
+    "exterior_green_pixels": 33747,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "gem.pdf",
+    "green_pixels_detected": 59448,
+    "interior_green_pixels": 37502,
+    "exterior_green_pixels": 37502,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "gru.pdf",
+    "green_pixels_detected": 26051,
+    "interior_green_pixels": 23053,
+    "exterior_green_pixels": 23053,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "her.pdf",
+    "green_pixels_detected": 48237,
+    "interior_green_pixels": 25495,
+    "exterior_green_pixels": 25495,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "hor.pdf",
+    "green_pixels_detected": 27218,
+    "interior_green_pixels": 22219,
+    "exterior_green_pixels": 22219,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "hya.pdf",
+    "green_pixels_detected": 56124,
+    "interior_green_pixels": 47012,
+    "exterior_green_pixels": 47012,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "hyi.pdf",
+    "green_pixels_detected": 29276,
+    "interior_green_pixels": 23454,
+    "exterior_green_pixels": 23454,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ind.pdf",
+    "green_pixels_detected": 27210,
+    "interior_green_pixels": 22891,
+    "exterior_green_pixels": 22891,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lac.pdf",
+    "green_pixels_detected": 39179,
+    "interior_green_pixels": 36408,
+    "exterior_green_pixels": 36408,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "leo.pdf",
+    "green_pixels_detected": 61459,
+    "interior_green_pixels": 32339,
+    "exterior_green_pixels": 32339,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lep.pdf",
+    "green_pixels_detected": 29863,
+    "interior_green_pixels": 21357,
+    "exterior_green_pixels": 21357,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lib.pdf",
+    "green_pixels_detected": 54693,
+    "interior_green_pixels": 41802,
+    "exterior_green_pixels": 41802,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lmi.pdf",
+    "green_pixels_detected": 47573,
+    "interior_green_pixels": 44608,
+    "exterior_green_pixels": 44608,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lup.pdf",
+    "green_pixels_detected": 58393,
+    "interior_green_pixels": 46253,
+    "exterior_green_pixels": 46253,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lyn.pdf",
+    "green_pixels_detected": 41399,
+    "interior_green_pixels": 33232,
+    "exterior_green_pixels": 33232,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "lyr.pdf",
+    "green_pixels_detected": 27306,
+    "interior_green_pixels": 23957,
+    "exterior_green_pixels": 23957,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "men.pdf",
+    "green_pixels_detected": 40428,
+    "interior_green_pixels": 39129,
+    "exterior_green_pixels": 39129,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "mic.pdf",
+    "green_pixels_detected": 20359,
+    "interior_green_pixels": 20343,
+    "exterior_green_pixels": 20343,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "mon.pdf",
+    "green_pixels_detected": 40770,
+    "interior_green_pixels": 33178,
+    "exterior_green_pixels": 33178,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "mus.pdf",
+    "green_pixels_detected": 31614,
+    "interior_green_pixels": 29990,
+    "exterior_green_pixels": 29990,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "nor.pdf",
+    "green_pixels_detected": 41151,
+    "interior_green_pixels": 39248,
+    "exterior_green_pixels": 39248,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "oct.pdf",
+    "green_pixels_detected": 24108,
+    "interior_green_pixels": 19189,
+    "exterior_green_pixels": 19189,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "oph.pdf",
+    "green_pixels_detected": 93130,
+    "interior_green_pixels": 64616,
+    "exterior_green_pixels": 64616,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ori.pdf",
+    "green_pixels_detected": 81551,
+    "interior_green_pixels": 65681,
+    "exterior_green_pixels": 65681,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "pav.pdf",
+    "green_pixels_detected": 35995,
+    "interior_green_pixels": 26995,
+    "exterior_green_pixels": 26995,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "peg.pdf",
+    "green_pixels_detected": 62539,
+    "interior_green_pixels": 45614,
+    "exterior_green_pixels": 45614,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "per.pdf",
+    "green_pixels_detected": 52395,
+    "interior_green_pixels": 40317,
+    "exterior_green_pixels": 40317,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "phe.pdf",
+    "green_pixels_detected": 28777,
+    "interior_green_pixels": 22350,
+    "exterior_green_pixels": 22350,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "pic.pdf",
+    "green_pixels_detected": 23741,
+    "interior_green_pixels": 21576,
+    "exterior_green_pixels": 21576,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "psa.pdf",
+    "green_pixels_detected": 24316,
+    "interior_green_pixels": 18875,
+    "exterior_green_pixels": 18875,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "psc.pdf",
+    "green_pixels_detected": 73457,
+    "interior_green_pixels": 54493,
+    "exterior_green_pixels": 54493,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "pup.pdf",
+    "green_pixels_detected": 49882,
+    "interior_green_pixels": 38666,
+    "exterior_green_pixels": 38666,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "pyx.pdf",
+    "green_pixels_detected": 20615,
+    "interior_green_pixels": 19013,
+    "exterior_green_pixels": 19013,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "ret.pdf",
+    "green_pixels_detected": 27665,
+    "interior_green_pixels": 25847,
+    "exterior_green_pixels": 25847,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "scl.pdf",
+    "green_pixels_detected": 28475,
+    "interior_green_pixels": 25116,
+    "exterior_green_pixels": 25116,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "sco.pdf",
+    "green_pixels_detected": 91366,
+    "interior_green_pixels": 78822,
+    "exterior_green_pixels": 78822,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "sct.pdf",
+    "green_pixels_detected": 73227,
+    "interior_green_pixels": 69965,
+    "exterior_green_pixels": 69965,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "sex.pdf",
+    "green_pixels_detected": 49193,
+    "interior_green_pixels": 47347,
+    "exterior_green_pixels": 47347,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "sge.pdf",
+    "green_pixels_detected": 21567,
+    "interior_green_pixels": 20446,
+    "exterior_green_pixels": 20446,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "sgr.pdf",
+    "green_pixels_detected": 71375,
+    "interior_green_pixels": 48485,
+    "exterior_green_pixels": 48485,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "tau.pdf",
+    "green_pixels_detected": 59060,
+    "interior_green_pixels": 36274,
+    "exterior_green_pixels": 36274,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "tel.pdf",
+    "green_pixels_detected": 39859,
+    "interior_green_pixels": 39305,
+    "exterior_green_pixels": 39305,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "tra.pdf",
+    "green_pixels_detected": 31229,
+    "interior_green_pixels": 25862,
+    "exterior_green_pixels": 25862,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "tri.pdf",
+    "green_pixels_detected": 32691,
+    "interior_green_pixels": 29276,
+    "exterior_green_pixels": 29276,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "tuc.pdf",
+    "green_pixels_detected": 20891,
+    "interior_green_pixels": 16330,
+    "exterior_green_pixels": 16330,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "uma.pdf",
+    "green_pixels_detected": 47195,
+    "interior_green_pixels": 27762,
+    "exterior_green_pixels": 27762,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "umi.pdf",
+    "green_pixels_detected": 27491,
+    "interior_green_pixels": 21176,
+    "exterior_green_pixels": 21176,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "vel.pdf",
+    "green_pixels_detected": 45353,
+    "interior_green_pixels": 32833,
+    "exterior_green_pixels": 32833,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "vir.pdf",
+    "green_pixels_detected": 50660,
+    "interior_green_pixels": 22894,
+    "exterior_green_pixels": 22894,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "vol.pdf",
+    "green_pixels_detected": 37554,
+    "interior_green_pixels": 31883,
+    "exterior_green_pixels": 31883,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  },
+  {
+    "file": "vul.pdf",
+    "green_pixels_detected": 33445,
+    "interior_green_pixels": 32783,
+    "exterior_green_pixels": 32783,
+    "green_pixels_remaining": 0,
+    "non_masked_pixels_unchanged": false,
+    "needs_review": true
+  }
+]
